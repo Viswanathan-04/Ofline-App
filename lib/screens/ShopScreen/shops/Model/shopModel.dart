@@ -1,0 +1,40 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class ShopModel {
+  final String id;
+  final String shop_name;
+  final String shopImageLink;
+  final String address;
+  final bool isOpen;
+  final double latitude;
+  final double longitude;
+  final String startingYear;
+
+  ShopModel({
+    required this.id,
+    required this.shop_name,
+    required this.shopImageLink,
+    required this.address,
+    required this.isOpen,
+    required this.latitude,
+    required this.longitude,
+    required this.startingYear,
+  });
+
+  factory ShopModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final geopoint = data['location'] as GeoPoint;
+    return ShopModel(
+      id: doc.id,
+      shop_name: data['shop_name'],
+      shopImageLink: data['shopImageLink'],
+      address: data['address'],
+      isOpen: data['isOpen'],
+      startingYear: data['startingYear'],
+      latitude: geopoint.latitude,
+      longitude: geopoint.longitude,
+    );
+  }
+}
+
+
