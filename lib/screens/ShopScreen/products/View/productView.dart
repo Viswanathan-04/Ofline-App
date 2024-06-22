@@ -6,19 +6,19 @@ import '../../../../utility/Constants/color.dart';
 import '../../../../utility/Widgets/animatedSearch/View/animatedSearchView.dart';
 import '../Model/productModel.dart';
 
-class Order_Screen extends ConsumerStatefulWidget {
+class Product_Screen extends ConsumerStatefulWidget {
   final String shopId;
+  final String startingYear;
 
-  const Order_Screen({Key? key, required this.shopId}) : super(key: key);
+  const Product_Screen(
+      {Key? key, required this.shopId, required this.startingYear})
+      : super(key: key);
 
   @override
-  ConsumerState<Order_Screen> createState() => _Order_ScreenState();
+  ConsumerState<Product_Screen> createState() => _Product_ScreenState();
 }
 
-class _Order_ScreenState extends ConsumerState<Order_Screen> {
-  OrderCategoryList orderCategory = OrderCategoryList();
-
-  late List<OrderCategoryList> visibile;
+class _Product_ScreenState extends ConsumerState<Product_Screen> {
   String groupValue = 'Dine In';
 
   @override
@@ -29,11 +29,12 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
   }
 
   Map<int, String?> dropdownValues = {};
+  String filter = 'All';
 
   @override
   Widget build(BuildContext context) {
-    final productListAsyncValue =
-        ref.watch(productListProvider(widget.shopId));
+    final productListAsyncValue = ref.watch(productListProvider(widget.shopId));
+    Set<String> categorySet = {'All'};
 
     var mqw = MediaQuery.of(context).size.width;
     var mqh = MediaQuery.of(context).size.height;
@@ -92,9 +93,8 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
                                       borderRadius: BorderRadius.circular(18)),
                                   height: mqh * 800 / 2340,
                                   width: mqw * 10 / 1080,
-                                  child: productListAsyncValue.when(
-                                      data: (products) {
-                                    Set<String> categorySet = {};
+                                  child:
+                                      productListAsyncValue.when(data: (products) {
 
                                     for (var product in products) {
                                       if (!categorySet
@@ -102,7 +102,6 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
                                         categorySet.add(product.sub_category);
                                       }
                                     }
-                                    print(categorySet);
                                     return ListView.builder(
                                         itemCount: categorySet.length,
                                         itemBuilder: (BuildContext, index) {
@@ -114,7 +113,10 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
                                                   bottom: 20),
                                               child: GestureDetector(
                                                 onTap: () {
-                                                  setState(() {});
+                                                  setState(() {
+                                                    filter = category;
+                                                    Navigator.of(context).pop();
+                                                  });
                                                 },
                                                 child: Text(
                                                   category,
@@ -147,7 +149,7 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
               )
             ],
             elevation: 0,
-            title: const MySearchBar(hintext: 'Since 1993'),
+            title: MySearchBar(hintext: 'Since ${widget.startingYear}'),
             centerTitle: true),
         body: Column(
           children: [
@@ -155,183 +157,184 @@ class _Order_ScreenState extends ConsumerState<Order_Screen> {
                 flex: 14,
                 child: productListAsyncValue.when(data: (products) {
                   List<ProductModel> inStockProducts =
-                      products.where((product) => product.inStock).toList();
-                  return GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14.0,
-                      childAspectRatio: 0.8,
-                    ),
-                    itemCount: inStockProducts.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final product = inStockProducts[index];
+                      products.where((product) => filter=='All' ? product.inStock : product.inStock && product.sub_category==filter).toList();
+                  return Padding(
+                    padding:  EdgeInsets.only(top: mqh*15/2340),
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 14.0,
+                        childAspectRatio: 0.83,
+                      ),
+                      itemCount: inStockProducts.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final product = inStockProducts[index];
 
-                      // Initialize dropdown value for each product if not already initialized
-                      dropdownValues.putIfAbsent(
-                          index, () => product.sizeVariants.keys.first);
+                        // Initialize dropdown value for each product if not already initialized
+                        dropdownValues.putIfAbsent(
+                            index, () => product.sizeVariants.keys.first);
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 7.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            boxShadow: const [
-                              BoxShadow(
-                                offset: Offset(0.5, 1.00),
-                                color: Color.fromRGBO(230, 230, 231, 0.3),
-                                blurRadius: 2.0,
-                              ),
-                              BoxShadow(
-                                offset: Offset(-1, 0.3),
-                                color: Color.fromRGBO(125, 125, 125, 0.15),
-                                blurRadius: 2.0,
-                              ),
-                            ],
-                            color: kWhite,
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: mqh * 350 / 2340,
-                                width: mqw * 530 / 1080,
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(20.0),
-                                    topRight: Radius.circular(20.0),
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 7.0, right: 7.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: const [
+                                BoxShadow(
+                                  offset: Offset(0.5, 1.00),
+                                  color: Color.fromRGBO(230, 230, 231, 0.3),
+                                  blurRadius: 2.0,
+                                ),
+                                BoxShadow(
+                                  offset: Offset(-1, 0.3),
+                                  color: Color.fromRGBO(125, 125, 125, 0.15),
+                                  blurRadius: 2.0,
+                                ),
+                              ],
+                              color: kWhite,
+                              borderRadius: BorderRadius.circular(18.0),
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: mqh * 350 / 2340,
+                                  width: mqw * 530 / 1080,
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(18.0),
+                                      topRight: Radius.circular(18.0),
+                                    ),
+                                    child: Image.network(
+                                      product.product_image,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                  child: Image.network(
-                                    product.product_image,
-                                    fit: BoxFit.cover,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: mqh * 30 / 2340,
+                                    left: mqw * 25 / 1080,
                                   ),
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: mqh * 30 / 2340,
-                                  left: mqw * 25 / 1080,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    SizedBox(
-                                      width: mqw * 250 / 1080,
-                                      child: Text(
-                                        product.product_name,
-                                        maxLines: 2,
-                                        textDirection: TextDirection.ltr,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 14.7,
-                                          fontWeight: FontWeight.w500,
-                                          color: kGrey,
-                                        ),
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                        left: mqw * 55 / 1080,
-                                        right: mqw * 55 / 1080,
-                                      ),
-                                      child: Text(
-                                        "₹${product.sizeVariants[dropdownValues[index]]}",
-                                        textDirection: TextDirection.ltr,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: kGrey,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: mqh * 10 / 2340,
-                                  bottom: mqh * 15 / 2340,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                        left: mqw * 10 / 1080,
-                                      ),
-                                      child: product.sizeVariants.keys.first !=
-                                              "Regular"
-                                          ? DropdownButton<String>(
-                                              value: dropdownValues[index],
-                                              underline: Container(
-                                                color: kWhite,
-                                              ),
-                                              style: const TextStyle(
-                                                fontSize: 12.5,
-                                                color: kGrey,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              icon: const Icon(
-                                                Icons.arrow_drop_down_sharp,
-                                                color: kGrey,
-                                              ),
-                                              onChanged: (String? newValue) {
-                                                setState(() {
-                                                  dropdownValues[index] =
-                                                      newValue;
-                                                });
-                                              },
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              dropdownColor: kWhite,
-                                              items: [
-                                                ...product.sizeVariants.keys
-                                                    .map((String category) {
-                                                  return DropdownMenuItem<
-                                                      String>(
-                                                    value: category,
-                                                    child: Text(category),
-                                                  );
-                                                }).toList()
-                                              ],
-                                            )
-                                          : const SizedBox(
-                                              height: 48, width: 54),
-                                    ),
-                                    SizedBox(
-                                      width: mqw * 50 / 1080,
-                                    ),
-                                    Container(
-                                      height: mqh * 70 / 2340,
-                                      width: mqw * 140 / 1080,
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(7),
-                                        ),
-                                        color: kBlue,
-                                      ),
-                                      child: const Center(
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Container(
+                                        width: mqw * 250 / 1080,
+                                        height: mqh * 110 / 2340,
                                         child: Text(
-                                          'Add',
-                                          style: TextStyle(
-                                            color: kWhite,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
+                                          product.product_name,
+                                          maxLines: 2,
+                                          textDirection: TextDirection.ltr,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 14.7,
+                                            fontWeight: FontWeight.w500,
+                                            color: kGrey,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                        Container(
+                                          width: mqw * 160 / 1080,
+                                          height: mqh * 110 / 2340,
+                                          child: Text(
+                                            "₹${product.sizeVariants[dropdownValues[index]]}",
+                                            textDirection: TextDirection.ltr,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: kGrey,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: mqh * 10 / 2340
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          left: mqw * 10 / 1080,
+                                        ),
+                                        child: product.sizeVariants.keys.first !=
+                                                "Regular"
+                                            ? DropdownButton<String>(
+                                                value: dropdownValues[index],
+                                                underline: Container(
+                                                  color: kWhite,
+                                                ),
+                                                style: const TextStyle(
+                                                  fontSize: 12.5,
+                                                  color: kGrey,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.arrow_drop_down_sharp,
+                                                  color: kGrey,
+                                                ),
+                                                onChanged: (String? newValue) {
+                                                  setState(() {
+                                                    dropdownValues[index] =
+                                                        newValue;
+                                                  });
+                                                },
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                dropdownColor: kWhite,
+                                                items: [
+                                                  ...product.sizeVariants.keys
+                                                      .map((String category) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: category,
+                                                      child: Text(category),
+                                                    );
+                                                  }).toList()
+                                                ],
+                                              )
+                                            : const SizedBox(
+                                                height: 48, width: 54),
+                                      ),
+                                      SizedBox(
+                                        width: mqw * 50 / 1080,
+                                      ),
+                                      Container(
+                                        height: mqh * 70 / 2340,
+                                        width: mqw * 140 / 1080,
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(7),
+                                          ),
+                                          color: kBlue,
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            'Add',
+                                            style: TextStyle(
+                                              color: kWhite,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   );
                 }, error: (error, stackTrace) {
                   return Center(child: Text('Error: $error'));

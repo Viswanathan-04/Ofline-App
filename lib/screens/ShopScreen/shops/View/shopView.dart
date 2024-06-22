@@ -101,7 +101,7 @@ class _Home_Body_ScreenState extends ConsumerState<Home_Body_Screen> {
                                         .push(MaterialPageRoute(
                                       maintainState: true,
                                       builder: (context) =>
-                                          Order_Screen(shopId : shop.id),
+                                          Product_Screen(shopId : shop.id, startingYear : shop.startingYear),
                                     ));
                                   },
                                   child: Image.network(
