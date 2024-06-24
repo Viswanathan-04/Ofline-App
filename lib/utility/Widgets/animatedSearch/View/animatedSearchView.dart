@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ofline_app/utility/Widgets/animatedSearch/ViewModel/searchViewModel.dart';
 
 import '../../../Constants/color.dart';
 
 
-class MySearchBar extends StatefulWidget {
+class MySearchBar extends ConsumerStatefulWidget {
   final String hintext;
 
   const MySearchBar({
@@ -12,15 +14,31 @@ class MySearchBar extends StatefulWidget {
     required this.hintext
 
   });
-
-
+  
   @override
-  State<MySearchBar> createState() => _MySearchBarState();
+  ConsumerState<ConsumerStatefulWidget> createState() {
+    // TODO: implement createState
+    return _MySearchBarState();
+  }
 }
 
-class _MySearchBarState extends State<MySearchBar> {
+class _MySearchBarState extends ConsumerState<MySearchBar> {
   bool showSearchField = false;
+  late TextEditingController _controller;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _controller = TextEditingController(text: ref.read(searchTextProvider));
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _controller.dispose();
+    super.dispose();
+
+  } 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -35,6 +53,10 @@ class _MySearchBarState extends State<MySearchBar> {
   Widget searchField() {
     return Container(
         child: TextField(
+          controller: _controller,
+          onChanged: (value){
+            ref.read(searchTextProvider.notifier).state = value.toLowerCase();
+          },
       cursorHeight: 25,
       style: const TextStyle(fontWeight: FontWeight.w500, color: kGrey),
       textDirection: TextDirection.ltr,
@@ -97,3 +119,5 @@ class _MySearchBarState extends State<MySearchBar> {
     );
   }
 }
+
+

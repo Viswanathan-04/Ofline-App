@@ -17,7 +17,7 @@ class Favourite_Screen extends StatefulWidget {
 class _Favourite_ScreenState extends State<Favourite_Screen> {
   final bool _isEnabled = false;
 
-  var loc = const Home_Body_Screen();
+  // var loc = const Home_Body_Screen();
 
   get address => null;
 

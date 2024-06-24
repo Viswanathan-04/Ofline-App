@@ -1,6 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:location/location.dart';
+import 'package:ofline_app/screens/ShopScreen/shops/View/shopCardView.dart';
+import 'package:ofline_app/utility/Location/View/locationView.dart';
+import 'package:ofline_app/utility/Location/ViewModel/locationViewModel.dart';
+import 'package:ofline_app/utility/Widgets/animatedSearch/ViewModel/searchViewModel.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../auth/View/authView.dart';
@@ -16,13 +21,23 @@ import '../ViewModel/shopViewModel.dart';
 
 
 class Home_Body_Screen extends ConsumerStatefulWidget {
-  const Home_Body_Screen({super.key});
+  
+  
+  const Home_Body_Screen({super.key,});
 
   @override
   ConsumerState<Home_Body_Screen> createState() => _Home_Body_ScreenState();
 }
 
 class _Home_Body_ScreenState extends ConsumerState<Home_Body_Screen> {
+
+    @override
+  void initState() {
+    super.initState();
+    final locationService = ref.read(locationServiceProvider);
+    locationService.fetchAndSetLocation();
+  }
+
 
   int _favNumber = 0;
   bool _favourite = false;
@@ -44,9 +59,9 @@ class _Home_Body_ScreenState extends ConsumerState<Home_Body_Screen> {
   Widget build(BuildContext context) {
     var mqw = MediaQuery.of(context).size.width;
     var mqh = MediaQuery.of(context).size.height;
-
-    final shopListAsyncValue = ref.watch(shopListProvider);
-    final locate = ref.watch(locationProvider);
+    
+    final shopListAsyncValue = ref.watch(shopListProvider(ref.watch(searchTextProvider)));
+    // final locate = ref.watch(loca);
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
@@ -56,172 +71,25 @@ class _Home_Body_ScreenState extends ConsumerState<Home_Body_Screen> {
               title: MySearchBar(hintext: 'Search'),
             ),
             drawer: buildDrawer(mqw, mqh, context),
-            body: shopListAsyncValue.when(data: (shops) {
-              return ListView.builder(
-                  itemCount: shops.length,
-                  itemBuilder: (BuildContext context, int index
-                      ) {
-                    final shop = shops[index];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          top: mqh * 29 / 2340,
-                          left: mqw * 50 / 1080,
-                          right: mqw * 50 / 1080,
-                          bottom: mqh * 18 / 2340),
-                      child: Container(
-                        height: mqh * 700 / 2340,
-                        width: mqw * 990 / 1080,
-                        decoration: BoxDecoration(
-                            boxShadow: const [
-                              BoxShadow(
-                                offset: Offset(0.5, 1.00),
-                                color: Color.fromRGBO(230, 230, 231, 0.3),
-                                blurRadius: 2.0,
-                              ),
-                              BoxShadow(
-                                offset: Offset(-1, 0.3),
-                                color: Color.fromRGBO(125, 125, 125, 0.15),
-                                blurRadius: 2.0,
-                              ),
-                            ],
-                            color: kWhite,
-                            borderRadius: BorderRadius.circular(20.5)),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: mqh * 395 / 2340,
-                              width: mqw * 1000 / 1080,
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(20.5),
-                                    topRight: Radius.circular(20.5)),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .push(MaterialPageRoute(
-                                      maintainState: true,
-                                      builder: (context) =>
-                                          Product_Screen(shopId : shop.id, startingYear : shop.startingYear),
-                                    ));
-                                  },
-                                  child: Image.network(
-                                    shop.shopImageLink,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: mqh * 28 / 2340),
-                            Text(shop.shop_name.toUpperCase(),
-                                style: const TextStyle(
-                                    color: kBlue,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5)),
-                            SizedBox(height: mqh * 25 / 2340),
-                             Text(shop.address,
-                                style: const TextStyle(
-                                    color: kGrey,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5)),
-                            SizedBox(height: mqh * 28 / 2340),
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: mqw * 65 / 1080),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _favourite
-                                          ? GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _favourite = false;
-                                                  _favDec();
-                                                });
-                                              },
-                                              child: const Icon(
-                                                Icons.favorite,
-                                                size: 22,
-                                                color: kBlue,
-                                              ),
-                                            )
-                                          : GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _favourite = true;
-                                                  _favInc();
-                                                });
-                                              },
-                                              child: const Icon(
-                                                Icons.favorite_border_outlined,
-                                                size: 22,
-                                                color: kBlue,
-                                              ),
-                                            ),
-                                      SizedBox(width: mqw * 7 / 1080),
-                                      const Text(
-                                        '34',
-                                        style: TextStyle(
-                                            color: kBlue,
-                                            fontSize: 14.5,
-                                            fontWeight: FontWeight.w600),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          // _launchMap();
-                                          // String googleMapUrl =
-                                              // "https://maps.google.com/?q=$lokation.lat_merchant,$lokation.long_merchant";
-
-                                          // launch(googleMapUrl);
-                                        },
-                                        child: const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 22,
-                                          color: kBlue,
-                                        ),
-                                      ),
-                                      SizedBox(width: mqw * 1 / 1080),
-                                      Text(
-                                        "${locate.distanceInMeters} m",
-                                        style: const TextStyle(
-                                            color: kBlue,
-                                            fontSize: 14.5,
-                                            fontWeight: FontWeight.w600),
-                                      )
-                                    ],
-                                  ),
-
-                                  shop.isOpen? const Text('Open',
-                                      style: TextStyle(
-                                          color: kBlue,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600)):const Text('Closed',
-                                      style: TextStyle(
-                                          color: kRed,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600))
-
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    );
-                  });
-            }, error: (error, stackTrace) {
-              return Center(child: Text('Error: $error'));
-            }, loading: () {
-              return const CircularProgressIndicator(color: Colors.transparent);
-            })));
+            body: RefreshIndicator(
+              onRefresh: ()async{
+                  await ref.read(locationServiceProvider).fetchAndSetLocation();
+                },
+              color: kBlue,
+              backgroundColor: kWhite,
+              child: shopListAsyncValue.when(data: (shops) {
+                return ListView.builder(
+                    itemCount: shops.length,
+                    itemBuilder: (BuildContext context, int index
+                        ) {
+                      final shop = shops[index];
+                      return ShopCard(key:ValueKey(shop.id),shop: shop, mqh: mqh, mqw: mqw); });
+              }, error: (error, stackTrace) {
+                return Center(child: Text('Error: $error'));
+              }, loading: () {
+                return const CircularProgressIndicator(color: Colors.transparent);
+              }),
+            )));
   }
 
 

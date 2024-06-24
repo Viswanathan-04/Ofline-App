@@ -1,122 +1,138 @@
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
+// //screen2
+// import 'dart:math';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:location/location.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:url_launcher/url_launcher.dart';
+// import 'package:url_launcher/url_launcher_string.dart';
+
+
+
+  // Future<void> _fetchShops({String? searchQuery}) async {
+  //   QuerySnapshot snapshot =
+  //       await FirebaseFirestore.instance.collection('shops').get();
+
+  //   List<Map<String, dynamic>> tempShops = [];
+
+  //   for (DocumentSnapshot doc in snapshot.docs) {
+  //     GeoPoint geoPoint = doc['location'];
+  //     double latitude = geoPoint.latitude;
+  //     double longitude = geoPoint.longitude;
+  //     double distanceInKm =
+  //         calculateDistanceInKm(latitude!, longitude!, latitude, longitude);
+  //     String distance = formatDistance(distanceInKm);
+
+  //     QuerySnapshot productsSnapshot =
+  //         await doc.reference.collection('products').get();
+
+  //     bool hasMatchingProduct = false;
+  //     for (var productDoc in productsSnapshot.docs) {
+  //       if (searchQuery != null &&
+  //           productDoc['name']
+  //               .toLowerCase()
+  //               .startsWith(searchQuery.toLowerCase())) {
+  //         hasMatchingProduct = true;
+  //         break;
+  //       }
+  //     }
+
+  //     if (hasMatchingProduct ||
+  //         (searchQuery != null &&
+  //             doc['name']
+  //                 .toLowerCase()
+  //                 .startsWith(searchQuery.toLowerCase()))) {
+  //       tempShops.add({
+  //         'name': doc['name'],
+  //         'latitude': latitude,
+  //         'longitude': longitude,
+  //         'distanceInKm': distanceInKm,
+  //         'distance': distance,
+  //       });
+  //     }
+  //   }
+
+  //   tempShops.sort((a, b) => a['distanceInKm'].compareTo(b['distanceInKm']));
+
+  //   // setState(() {
+  //   //   shops = tempShops;
+  //   // });
+  // }
+
+//   double calculateDistanceInKm(
+//       double lat1, double lon1, double lat2, double lon2) {
+//     const double p = 0.017453292519943295;
+
+//     final a = 0.5 -
+//         cos((lat2 - lat1) * p) / 2 +
+//         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+
+//     double distanceInKm = 12742 * asin(sqrt(a));
+//     return double.parse(distanceInKm.toStringAsFixed(1));
+//   }
+
+//   String formatDistance(double distanceInKm) {
+//     if (distanceInKm < 1) {
+//       return '${(distanceInKm * 1000).round()} m';
+//     } else {
+//       return '${distanceInKm.round()} km';
+//     }
+//   }
+
+//   void _openMaps(double latitude, double longitude) async {
+//     String url =
+//         'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+//     if (await canLaunchUrlString(url)) {
+//       await launchUrlString(url);
+//     } else {
+//       throw 'Could not launch $url';
+//     }
+//   }
+
+//   Future<LocationData?> getCurrentLocation() async {
+//     Location location = Location();
+
+//     bool serviceEnabled;
+//     PermissionStatus permissionGranted;
+//     LocationData locationData;
+
+//     serviceEnabled = await location.serviceEnabled();
+//     if (!serviceEnabled) {
+//       serviceEnabled = await location.requestService();
+//       if (!serviceEnabled) {
+//         return null;
+//       }
+//     }
+
+//     permissionGranted = await location.hasPermission();
+//     if (permissionGranted == PermissionStatus.denied) {
+//       permissionGranted = await location.requestPermission();
+//       if (permissionGranted != PermissionStatus.granted) {
+//         return null;
+//       }
+//     }
+
+//     locationData = await location.getLocation();
+//     // setState(() {
+//     //   _latitude = locationData.latitude;
+//     //   _longitude = locationData.longitude;
+//     // });
+
+//     return locationData;
+//   }
+
+// final locationProvider = FutureProvider<LocationData?>((ref) async {
+//   return await getCurrentLocation();
+// });
+
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:location/location.dart';
 
-import '../../../screens/ShopScreen/shops/Model/shopModel.dart';
+// Define a data class to hold location data
+class UserLocation {
+  final double latitude;
+  final double longitude;
 
-
-
-
-final locationProvider = StateNotifierProvider<LocationNotifier, LocationState>((ref) => LocationNotifier());
-
-class LocationState {
-  double? latUser;
-  double? longUser;
-  String address;
-  double? latMerchant;
-  double? longMerchant;
-  double distanceInMeters;
-  String? distance;
-
-  LocationState({
-    this.latUser,
-    this.longUser,
-    this.address = "",
-    this.latMerchant,
-    this.longMerchant,
-    this.distanceInMeters = 0,
-    this.distance,
-  });
-
-  LocationState copyWith({
-    double? latUser,
-    double? longUser,
-    String? address,
-    double? latMerchant,
-    double? longMerchant,
-    double? distanceInMeters,
-    String? distance,
-  }) {
-    return LocationState(
-      latUser: latUser ?? this.latUser,
-      longUser: longUser ?? this.longUser,
-      address: address ?? this.address,
-      latMerchant: latMerchant ?? this.latMerchant,
-      longMerchant: longMerchant ?? this.longMerchant,
-      distanceInMeters: distanceInMeters ?? this.distanceInMeters,
-      distance: distance ?? this.distance,
-    );
-  }
-}
-
-class LocationNotifier extends StateNotifier<LocationState> {
-  LocationNotifier() : super(LocationState());
-
-  void setMerchantLocation(ShopModel shop) {
-    state = state.copyWith(
-      latMerchant: shop.latitude,
-      longMerchant: shop.longitude,
-    );
-  }
-
-  Future<void> getLatLong() async {
-    final Position position = await determinePosition();
-
-    double? distanceInMeters;
-    String? distanceInKm;
-
-    if (state.latMerchant != null && state.longMerchant != null) {
-      distanceInMeters = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        state.latMerchant!,
-        state.longMerchant!,
-      );
-      distanceInKm = (distanceInMeters / 1000).toStringAsFixed(1);
-
-      // int distanceInM = distanceInMeters.round();
-
-    }
-
-    state = state.copyWith(
-      latUser: position.latitude,
-      longUser: position.longitude,
-      distanceInMeters: distanceInMeters,
-      distance: distanceInKm.toString(),
-    );
-
-    _getAddress(position.latitude, position.longitude);
-  }
-
-  Future<Position> determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw 'Location services are disabled';
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw 'Location permissions are denied';
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw 'Location permissions are permanently denied.';
-    }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.bestForNavigation,
-    );
-  }
-
-  Future<void> _getAddress(double lat, double long) async {
-    final List<Placemark> placemarks = await placemarkFromCoordinates(lat, long);
-    if (placemarks.isNotEmpty) {
-      state = state.copyWith(address: placemarks[0].subLocality ?? "");
-    }
-  }
+  UserLocation({required this.latitude, required this.longitude});
 }

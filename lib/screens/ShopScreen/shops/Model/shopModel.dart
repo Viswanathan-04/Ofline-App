@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ShopModel {
@@ -9,6 +11,13 @@ class ShopModel {
   final double latitude;
   final double longitude;
   final String startingYear;
+  final int views;
+  final int fav_count;
+  final int live_view;
+  final bool isActivated;
+
+  double distance = 0.0;
+  String distanceText= "";
 
   ShopModel({
     required this.id,
@@ -19,6 +28,10 @@ class ShopModel {
     required this.latitude,
     required this.longitude,
     required this.startingYear,
+    required this.fav_count,
+    required this.views,
+    required this.isActivated,
+    required this.live_view
   });
 
   factory ShopModel.fromFirestore(DocumentSnapshot doc) {
@@ -33,8 +46,24 @@ class ShopModel {
       startingYear: data['startingYear'],
       latitude: geopoint.latitude,
       longitude: geopoint.longitude,
+      fav_count: data['fav_count'],
+      views: data['views'],
+      isActivated: data['isActivated'],
+      live_view: data['live_view']
     );
   }
 }
+
+// class ShopSearchParams {
+//   final String? searchQuery;
+//   final double latitude;
+//   final double longitude;
+
+//   ShopSearchParams({
+//     required this.searchQuery,
+//     required this.latitude,
+//     required this.longitude,
+//   });
+// }
 
 
